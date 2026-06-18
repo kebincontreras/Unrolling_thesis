@@ -1,0 +1,326 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{hyperref}
+
+\title{Formulación del Problema de Precompensación}
+
+\author{
+\IEEEauthorblockN{Documento metodológico}
+\IEEEauthorblockA{Versión reducida}
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Se formula el problema de precompensación de imágenes para un observador con aberración óptica fija como un problema inverso sobre la imagen de pantalla. Dada una imagen objetivo $I$, se busca una imagen transformada $I_{\text{new}}$ tal que, después de pasar por el operador óptico del observador, la percepción resultante sea lo más cercana posible a $I$. Esta formulación se expresa mediante un término de fidelidad que compara la percepción simulada con la referencia deseada y un término de regularización que restringe la complejidad de la imagen transformada.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Precompensación, problema inverso, formulación variacional.
+\end{IEEEkeywords}
+
+\section{Formulación del Problema de Precompensación}
+Sea $I$ la imagen objetivo que se desea que el observador perciba, y sea $I_{\text{new}}$ la imagen transformada que será mostrada en pantalla. Sea además $h$ la función de dispersión puntual del sistema óptico del observador. Bajo la hipótesis de linealidad e invariancia espacial local, la percepción visual inducida por la imagen mostrada queda modelada por
+\begin{equation}
+I_{\text{seen}} = h * I_{\text{new}},
+\label{eq:forward}
+\end{equation}
+donde $*$ denota convolución bidimensional.
+
+El objetivo ideal de precompensación consiste en encontrar una imagen de pantalla tal que la percepción coincida exactamente con la imagen deseada:
+\begin{equation}
+I = h * I_{\text{new}}.
+\label{eq:ideal}
+\end{equation}
+Sin embargo, en general esta igualdad no puede satisfacerse de forma exacta debido al carácter mal condicionado del operador óptico y a la necesidad de mantener una imagen transformada visualmente razonable. Por ello, el problema se formula como una minimización variacional:
+\begin{equation}
+\min_{I_{\text{new}}}
+\;
+\mathcal{D}(h * I_{\text{new}}, I)
++
+\mathcal{R}(I_{\text{new}}),
+\label{eq:variational}
+\end{equation}
+donde:
+\begin{itemize}
+    \item $\mathcal{D}(h * I_{\text{new}}, I)$ es el término de fidelidad al dato, que mide qué tan cercana es la percepción simulada $h * I_{\text{new}}$ a la imagen objetivo $I$.
+    \item $\mathcal{R}(I_{\text{new}})$ es el término de regularización, aplicado directamente sobre la imagen transformada, con el fin de evitar soluciones inestables, artefactos de alta frecuencia o patrones no plausibles.
+\end{itemize}
+
+Una elección clásica para el término de fidelidad es la norma cuadrática:
+\begin{equation}
+\mathcal{D}(h * I_{\text{new}}, I)
+=
+\frac{1}{2}\|h * I_{\text{new}} - I\|_2^2,
+\label{eq:l2data}
+\end{equation}
+de modo que el problema completo puede escribirse como
+\begin{equation}
+\min_{I_{\text{new}}}
+\;
+\frac{1}{2}\|h * I_{\text{new}} - I\|_2^2
++
+\mathcal{R}(I_{\text{new}}).
+\label{eq:full_problem}
+\end{equation}
+
+Esta expresión resume la idea central del método: no se restaura una imagen ya degradada, sino que se diseña una imagen de entrada $I_{\text{new}}$ que, al pasar por el sistema óptico aberrado, produzca una percepción aproximada de la imagen deseada $I$.
+
+\section{Unrolling Profundo para Precompensación}
+El unrolling profundo combina procedimientos de optimización guiados por el modelo con priors aprendidos, permitiendo construir una red interpretable y entrenable extremo a extremo. En este trabajo, la idea central es que la imagen mostrada debe satisfacer simultáneamente dos condiciones: por un lado, ser consistente con el operador óptico $h$ y, por otro, mantenerse dentro de una familia de imágenes transformadas plausibles. Con base en ello, el problema de recuperación de la imagen de pantalla puede escribirse como
+\begin{equation}
+\hat{x}
+=
+\arg\min_x
+\left\|
+h*x-I
+\right\|_2^2
++
+\lambda \mathcal{R}(x),
+\label{eq:jorge4}
+\end{equation}
+donde $x$ representa la imagen precompensada buscada, $I$ es la imagen objetivo, $h*x$ es la percepción simulada y $\mathcal{R}(\cdot)$ es una regularización implícita que incorpora suavidad, plausibilidad visual y prior aprendido.
+
+Para abreviar la notación, se define el operador directo
+\begin{equation}
+\mathcal{H}(x)=h*x.
+\label{eq:jorge5}
+\end{equation}
+Con esta definición, \eqref{eq:jorge4} puede reescribirse como
+\begin{equation}
+\hat{x}
+=
+\arg\min_x
+\left\|
+\mathcal{H}(x)-I
+\right\|_2^2
++
+\lambda \mathcal{R}(x).
+\label{eq:jorge6}
+\end{equation}
+
+Para resolver \eqref{eq:jorge6}, se introduce una variable auxiliar $z$ y se impone la restricción $x=z$, obteniendo el problema equivalente
+\begin{equation}
+\hat{x}
+=
+\arg\min_{x,z}
+\left\|
+\mathcal{H}(x)-I
+\right\|_2^2
++
+\lambda \mathcal{R}(z),
+\qquad
+\text{sujeto a } x=z.
+\label{eq:jorge7}
+\end{equation}
+La ventaja de esta forma es que separa el término de fidelidad física del término de regularización.
+
+El lagrangiano aumentado asociado es
+\begin{equation}
+\mathcal{L}(x,z,u)
+=
+\left\|
+\mathcal{H}(x)-I
+\right\|_2^2
++
+\lambda \mathcal{R}(z)
++
+\frac{\rho}{2}\|x-z+u\|_2^2,
+\label{eq:jorge8}
+\end{equation}
+donde $u$ es la variable dual escalada y $\rho>0$ es el parámetro de penalización. A partir de aquí, ADMM busca un punto silla resolviendo la secuencia de subproblemas
+\begin{equation}
+x^{(k+1)}
+=
+\arg\min_{x\in\mathbb{R}^n}
+\left\|
+\mathcal{H}(x)-I
+\right\|_2^2
++
+\frac{\rho}{2}
+\left\|
+x-\tilde{x}^{(k)}
+\right\|_2^2,
+\label{eq:jorge9}
+\end{equation}
+\begin{equation}
+z^{(k+1)}
+=
+\arg\min_{z\in\mathbb{R}^n}
+\lambda \mathcal{R}(z)
++
+\frac{\rho}{2}
+\left\|
+z-\tilde{z}^{(k)}
+\right\|_2^2,
+\label{eq:jorge10}
+\end{equation}
+\begin{equation}
+u^{(k+1)}
+=
+u^{(k)}+\left(x^{(k+1)}-z^{(k+1)}\right),
+\label{eq:jorge11}
+\end{equation}
+con
+\[
+\tilde{x}^{(k)}=z^{(k)}-u^{(k)},
+\qquad
+\tilde{z}^{(k)}=x^{(k+1)}+u^{(k)}.
+\]
+
+\subsection{Término de Fidelidad Física}
+El subproblema de \eqref{eq:jorge9} puede escribirse, para cada píxel $(m,n)$, como
+\begin{equation}
+x_{m,n}^{(k+1)}
+=
+\arg\min_{x_{m,n}}
+\left\|
+(\mathcal{H}x)_{m,n}-I_{m,n}
+\right\|_2^2
++
+\frac{\rho}{2}
+\left\|
+x_{m,n}-\tilde{x}_{m,n}^{(k)}
+\right\|_2^2.
+\label{eq:jorge12}
+\end{equation}
+Derivando con respecto a $x$ e igualando a cero, se obtiene la ecuación normal
+\begin{equation}
+\mathcal{H}^{\top}\!\left(\mathcal{H}x-I\right)
++
+\frac{\rho}{2}
+\left(x-\tilde{x}^{(k)}\right)
+=0.
+\label{eq:jorge13}
+\end{equation}
+Como $\mathcal{H}$ es una convolución, esta ecuación puede resolverse eficientemente en Fourier. Si $H$ es la transformada de Fourier de la PSF y $\widehat{(\cdot)}$ denota transformada de Fourier bidimensional, se obtiene la solución cerrada
+\begin{equation}
+\widehat{x}^{(k+1)}
+=
+\frac{
+\overline{H}\,\widehat{I}
++
+\left(\frac{\rho}{2}\right)\widehat{\tilde{x}^{(k)}}
+}{
+|H|^2+\frac{\rho}{2}
+},
+\label{eq:jorge14}
+\end{equation}
+y, por tanto,
+\begin{equation}
+x^{(k+1)}
+=
+\mathcal{F}^{-1}
+\left\{
+\frac{
+\overline{H}\,\widehat{I}
++
+\left(\frac{\rho}{2}\right)\widehat{\tilde{x}^{(k)}}
+}{
+|H|^2+\frac{\rho}{2}
+}
+\right\}.
+\label{eq:jorge15}
+\end{equation}
+Esto permite definir el subbloque físico como una capa de la forma
+\begin{equation}
+x^{(k+1)}
+=
+F\!\left(I,\tilde{x}^{(k)};\rho^{(k)}\right),
+\label{eq:jorge16}
+\end{equation}
+donde las dos primeras entradas son variables del algoritmo y $\rho^{(k)}$ se aprende etapa por etapa.
+
+\subsection{Subproblema de Prior Profundo Aprendible}
+El subproblema \eqref{eq:jorge10} puede interpretarse como un operador proximal de $\mathcal{R}(\cdot)$ sobre $\tilde{z}^{(k)}$. En vez de aprender explícitamente la función $\mathcal{R}$, se aprende un denoiser o refinador profundo de la forma
+\begin{equation}
+z^{(k+1)}
+=
+C\!\left(\tilde{z}^{(k)};\theta,\sigma^{(k)}\right),
+\label{eq:jorge17}
+\end{equation}
+donde $C(\cdot;\cdot)$ representa una red neuronal convolucional con parámetros $\theta$ y
+\[
+\sigma^{(k)}=\sqrt{\lambda/\rho^{(k)}}
+\]
+actúa como nivel efectivo de regularización, siguiendo la intuición de los métodos Plug-and-Play. En este operador diferenciable, la entrada es $\tilde{z}^{(k)}$ y los parámetros aprendibles son $\theta$ y $\sigma^{(k)}$.
+
+\subsection{Arquitectura de Unrolling Profundo}
+El unrolling profundo transforma cada iteración del algoritmo ADMM en un bloque entrenable. Para la $k$-ésima etapa se define el conjunto de parámetros aprendibles
+\[
+\Omega_k=\{\rho_k,\theta_k,\sigma_k\},
+\]
+y el conjunto de variables de optimización
+\[
+\chi_k=\{u^{(k)},x^{(k)},z^{(k)}\}.
+\]
+Matemáticamente, la red desenrollada se expresa como la composición de $T$ módulos iterativos:
+\begin{equation}
+\hat{z}
+=
+F_T\circ\cdots\circ F_1\!\left(I,\chi_1;\Omega_1\right),
+\label{eq:jorge18}
+\end{equation}
+donde cada bloque $F_k$ implementa las reglas de actualización de la iteración $k$. En forma compacta,
+\begin{equation}
+\hat{z}:=f(I;\Omega),
+\label{eq:jorge19}
+\end{equation}
+donde $f(\cdot;\Omega)$ representa la red de unrolling completa y $\Omega=\{\Omega_1,\ldots,\Omega_T\}$ agrupa todos los parámetros aprendibles.
+
+De este modo, la solución precompensada queda parametrizada por la red de unrolling $f(I;\Omega)$, y el problema original de optimización sobre la imagen transformada se convierte en un problema de aprendizaje sobre los parámetros entrenables $\Omega$. Para entrenar la red se adopta un esquema extremo a extremo mediante retropropagación, optimizando conjuntamente todos los parámetros según
+\begin{equation}
+\hat{\Omega}
+\in
+\arg\min_{\Omega}
+\mathbb{E}_{I}
+\left[
+\mathcal{L}\!\left(h*f(I;\Omega),I\right)
+\right],
+\label{eq:jorge20}
+\end{equation}
+donde, en la práctica, la esperanza se aproxima sobre el conjunto de entrenamiento y la pérdida compara la percepción simulada con la imagen objetivo.
+
+\subsection{Consistencia por Escalamiento en Datos Fuera de Distribución}
+Una propiedad deseable del operador de precompensación es que, ante un escalamiento de intensidad de la imagen objetivo, la transformación producida por la red conserve aproximadamente la misma estructura. Esto puede expresarse como
+\begin{equation}
+f(\alpha I;\Omega)\approx \alpha f(I;\Omega),
+\label{eq:jorge21}
+\end{equation}
+con $\alpha>0$ un factor de escala.
+
+Basados en esta idea, se puede introducir una pérdida de consistencia auto-supervisada definida por
+\begin{equation}
+\mathcal{L}_{\mathrm{SE}}^{\alpha}(I,f;\Omega)
+=
+\|x_2-x_3\|_2^2,
+\label{eq:jorge22}
+\end{equation}
+donde los pares $x_2,x_3$ se construyen como
+\begin{equation}
+x_2=\alpha\cdot f(I;\Omega),
+\qquad
+\alpha\sim\mathcal{U}(a,b),
+\qquad
+x_3=f(\alpha I;\Omega).
+\label{eq:jorge23}
+\end{equation}
+En este contexto, $x_2$ representa una nueva imagen precompensada obtenida al escalar la salida base del modelo, mientras que $x_3$ representa la salida de la red al recibir directamente una versión escalada de la imagen objetivo. Esta relación fuerza a que la red mantenga coherencia estructural frente a cambios globales de intensidad y puede usarse como mecanismo de adaptación o afinamiento fuera de la distribución de entrenamiento.
+
+Finalmente, una estrategia de afinamiento auto-supervisado puede formularse como
+\begin{equation}
+\Omega^\ast
+\in
+\arg\min_{\Omega}
+\mathbb{E}_{I,\alpha}
+\mathcal{L}_{\mathrm{SE}}^{\alpha}(I,f;\Omega).
+\label{eq:jorge24}
+\end{equation}
+La ecuación \eqref{eq:jorge24} cierra la formulación del unrolling profundo, pues expresa que la variable final de optimización ya no es la imagen transformada en sí misma, sino el conjunto de parámetros entrenables $\Omega$ de la red desenrollada, ya sea durante el entrenamiento supervisado principal o en una etapa posterior de ajuste auto-supervisado.
+
+\end{document}
