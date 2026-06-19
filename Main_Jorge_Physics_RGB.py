@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from __future__ import annotations
 
 import os
@@ -50,12 +51,15 @@ def _bootstrap_compatible_python() -> None:
 
 _bootstrap_compatible_python()
 
+=======
+>>>>>>> 81619f677812dc90ccebf2f11fb7b0f57ed4e709
 from project.config import ExperimentConfig
 from project.training.trainer_jorge_physics_rgb import run_experiment_jorge_physics_rgb
 
 
 def main() -> None:
     config = ExperimentConfig(
+<<<<<<< HEAD
         epochs=1200,
         run_prefix="jorge_physics_rgb",
         channel_mode="rgb",
@@ -65,6 +69,17 @@ def main() -> None:
         train_split=0.8,
         device="cuda",
         early_stopping_patience=100,
+=======
+        epochs=72,
+        run_prefix="jorge_physics_rgb",
+        channel_mode="rgb",
+        batch_size=4,
+        learning_rate=5e-4,
+        image_size=256,
+        train_split=0.8,
+        device="cpu",
+        early_stopping_patience=10,
+>>>>>>> 81619f677812dc90ccebf2f11fb7b0f57ed4e709
         k_stages=8,
         hidden_channels=32,
         rho_init=0.25,

@@ -23,6 +23,7 @@ RGB con tres PSF:
 ```bash
 source ~/mlenv/bin/activate && python Main_Jorge_Physics_RGB.py
 ```
+<<<<<<< HEAD
 
 Si se ejecuta accidentalmente con `/usr/bin/python3`, `Main_Jorge_Physics_RGB.py`
 intenta re-lanzarse automaticamente con `~/mlenv/bin/python` o
@@ -36,3 +37,5 @@ python hyperparameter_tuning_jorge_physics_rgb.py
 
 Cada experimento usa `epochs=1000`, `1001`, `1002`, ... para separar carpetas.
 El resumen acumulado queda en `outputs/hyperparameter_tuning_rgb/`.
+=======
+>>>>>>> 81619f677812dc90ccebf2f11fb7b0f57ed4e709
